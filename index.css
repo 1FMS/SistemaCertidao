@@ -1,0 +1,25 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+}
+
+body {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.navbar {
+    height: 100vh; /* Ocupa toda a altura da janela */
+    width: 250px; /* Largura fixa da navbar */
+    background-color: #2F4F4F; /* Cor de fundo da navbar */
+}
+
+.conteudo {
+    flex: 1; /* Faz com que a div de conteúdo ocupe o restante do espaço */
+    background-color: #D9D9D9;
+    padding: 20px; /* Espaçamento interno opcional */
+    overflow-y: auto; /* Permite rolagem caso o conteúdo ultrapasse a altura */
+}

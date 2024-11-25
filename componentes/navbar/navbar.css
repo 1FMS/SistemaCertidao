@@ -1,0 +1,50 @@
+/* Estilos da Navbar */
+.navbar {
+    width: 250px;
+    background-color: #324533; /* Fundo da navbar */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    height: 100vh;
+    box-sizing: border-box;
+}
+
+.logo img {
+    width: 150px;
+    margin-bottom: 20px;
+}
+
+.menu {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+    margin: 0;
+}
+
+.menu li a {
+    display: block;
+    padding: 15px;
+    color: #FFFFFF; /* Texto dos links */
+    text-decoration: none;
+    background-color: #798C72; /* Cor dos links */
+    margin-bottom: 10px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.menu li a:hover {
+    background-color: #73806E; /* Hover dos links */
+}
+
+/* Esconde o botão de toggle na versão desktop */
+.menu-toggle {
+    display: none; /* Esconde o toggle em telas maiores */
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+}
