@@ -203,123 +203,127 @@ function deletarCertidao($num_certidao) {
     }
 }
 
-function filtrarCertidoes($num_certidao = null, $data_inicial = null, $data_final = null, $limite = null, $offset = null) {
+function filtrarCertidoes($mesAtual, $num_certidao = null, $data_inicial = null, $data_final = null, $limite = null, $offset = null) {
     global $conexao;
+    
+    // Base da consulta
     $sql = "SELECT num_certidao, data_inicial, data_final, intervalo, tipo, origem, quantidade 
-            FROM certidao WHERE 1 = 1";
-    $params = [];
-    $types = "";
-
+            FROM certidao 
+            WHERE mes = ?";
+    $params = [$mesAtual];
+    $types = "i"; // O mês é um inteiro
+    
+    // Adicionar filtros opcionais
     if (!empty($num_certidao)) {
         $sql .= " AND num_certidao = ?";
         $params[] = $num_certidao;
-        $types .= "i";
+        $types .= "i"; // Número da certidão é inteiro
     }
 
     if (!empty($data_inicial) && !empty($data_final)) {
         $sql .= " AND data_inicial BETWEEN ? AND ?";
         $params[] = $data_inicial;
         $params[] = $data_final;
-        $types .= "ss"; // Dois parâmetros de string
+        $types .= "ss"; // Datas são strings
     }
 
-    // Adiciona limite e offset para paginação
+    // Ordenação
+    $sql .= " ORDER BY data_inicial DESC";
+
+    // Adicionar limite e offset para paginação
     if ($limite !== null) {
         $sql .= " LIMIT ?";
         $params[] = $limite;
-        $types .= "i"; // Parâmetro de inteiro
+        $types .= "i"; // Limite é inteiro
     }
-
     if ($offset !== null) {
         $sql .= " OFFSET ?";
         $params[] = $offset;
-        $types .= "i"; // Parâmetro de inteiro
+        $types .= "i"; // Offset é inteiro
     }
 
     $stmt = mysqli_prepare($conexao, $sql);
-    if ($stmt) {
-        // Passando parâmetros por referência
-        if (!empty($params)) {
-            $references = [];
-            $references[] = &$stmt; // primeiro parâmetro precisa ser a referência do stmt
-            $references[] = $types;
-            foreach ($params as $key => $value) {
-                $references[] = &$params[$key]; // passa cada parâmetro por referência
-            }
-            call_user_func_array('mysqli_stmt_bind_param', $references);
-        }
+    if ($stmt === false) {
+        die('Erro ao preparar a consulta: ' . mysqli_error($conexao));
+    }
 
-        if (mysqli_stmt_execute($stmt)) {
-            $result = mysqli_stmt_get_result($stmt);
-            if ($result) {
-                $certidoes = [];
-                while ($row = mysqli_fetch_assoc($result)) {
-                    $certidoes[] = $row;
-                }
-                mysqli_stmt_close($stmt);
-                return $certidoes;
-            } else {
-                echo "<script>console.log('Erro ao obter resultado: " . mysqli_error($conexao) . "');</script>";
-                return [];
+    // Associar os parâmetros
+    if (!empty($params)) {
+        $bindParams = [];
+        $bindParams[] = &$types; // Tipos
+        foreach ($params as $key => $value) {
+            $bindParams[] = &$params[$key]; // Cada parâmetro por referência
+        }
+        call_user_func_array('mysqli_stmt_bind_param', array_merge([$stmt], $bindParams));
+    }
+
+    // Executar a consulta
+    if (mysqli_stmt_execute($stmt)) {
+        $result = mysqli_stmt_get_result($stmt);
+        if ($result) {
+            $certidoes = [];
+            while ($row = mysqli_fetch_assoc($result)) {
+                $certidoes[] = $row;
             }
+            mysqli_stmt_close($stmt);
+            return $certidoes;
         } else {
-            echo "<script>console.log('Erro ao executar a consulta: " . mysqli_stmt_error($stmt) . "');</script>";
+            echo "<script>console.log('Erro ao obter resultado: " . mysqli_error($conexao) . "');</script>";
             return [];
         }
     } else {
-        echo "<script>console.log('Erro ao preparar a consulta: " . mysqli_error($conexao) . "');</script>";
+        echo "<script>console.log('Erro ao executar a consulta: " . mysqli_stmt_error($stmt) . "');</script>";
         return [];
     }
 }
 
-function contarCertidoes($num_certidao = null, $data_inicial = null, $data_final = null) {
-    global $conexao;
-    $sql = "SELECT COUNT(*) as total FROM certidao WHERE 1 = 1";
-    $params = [];
-    $types = "";
 
+function contarCertidoes($mesAtual, $num_certidao = null, $data_inicial = null, $data_final = null) {
+    global $conexao;
+    
+    $sql = "SELECT COUNT(*) as total FROM certidao WHERE mes = ?";
+    $params = [$mesAtual];
+    $types = "i"; // O mês é um inteiro
+    
     if (!empty($num_certidao)) {
         $sql .= " AND num_certidao = ?";
         $params[] = $num_certidao;
         $types .= "i";
     }
-
+    
     if (!empty($data_inicial) && !empty($data_final)) {
         $sql .= " AND data_inicial BETWEEN ? AND ?";
         $params[] = $data_inicial;
         $params[] = $data_final;
-        $types .= "ss"; // Dois parâmetros de string
+        $types .= "ss";
     }
 
     $stmt = mysqli_prepare($conexao, $sql);
-    if ($stmt) {
-        // Passando parâmetros por referência
-        if (!empty($params)) {
-            $references = [];
-            $references[] = &$stmt; // primeiro parâmetro precisa ser a referência do stmt
-            $references[] = $types;
-            foreach ($params as $key => $value) {
-                $references[] = &$params[$key]; // passa cada parâmetro por referência
-            }
-            call_user_func_array('mysqli_stmt_bind_param', $references);
-        }
+    if ($stmt === false) {
+        die('Erro ao preparar a consulta: ' . mysqli_error($conexao));
+    }
 
-        if (mysqli_stmt_execute($stmt)) {
-            $result = mysqli_stmt_get_result($stmt);
-            if ($result) {
-                $row = mysqli_fetch_assoc($result);
-                mysqli_stmt_close($stmt);
-                return $row['total'];
-            } else {
-                echo "<script>console.log('Erro ao obter resultado: " . mysqli_error($conexao) . "');</script>";
-                return 0;
-            }
+    if (!empty($params)) {
+        $bindParams = [];
+        $bindParams[] = &$types;
+        foreach ($params as $key => $value) {
+            $bindParams[] = &$params[$key];
+        }
+        call_user_func_array('mysqli_stmt_bind_param', array_merge([$stmt], $bindParams));
+    }
+
+    if (mysqli_stmt_execute($stmt)) {
+        $result = mysqli_stmt_get_result($stmt);
+        if ($result) {
+            $row = mysqli_fetch_assoc($result);
+            mysqli_stmt_close($stmt);
+            return $row['total'];
         } else {
-            echo "<script>console.log('Erro ao executar a consulta: " . mysqli_stmt_error($stmt) . "');</script>";
+            echo "<script>console.log('Erro ao obter resultado: " . mysqli_error($conexao) . "');</script>";
             return 0;
         }
     } else {
-        echo "<script>console.log('Erro ao preparar a consulta: " . mysqli_error($conexao) . "');</script>";
+        echo "<script>console.log('Erro ao executar a consulta: " . mysqli_stmt_error($stmt) . "');</script>";
         return 0;
     }
 }
