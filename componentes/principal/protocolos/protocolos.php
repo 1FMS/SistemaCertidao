@@ -1,7 +1,7 @@
 <?php
 require_once('./componentes/principal/backprincipal.php');
 
-$mesAtual = date('m'); // Obtém o mês atual para filtrar as certidões
+$mesAtual = 01;//(int)date('m'); // Obtém o mês atual para filtrar as certidões
 $certidoes = obterCertidoesArray($mesAtual);
 
 // Verifica se há uma requisição POST para atualização
@@ -39,47 +39,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['action'] === 'update') {
 if (isset($_GET['delete_id'])) {
     $num_certidao = $_GET['delete_id'];
     deletarCertidao($num_certidao);
-    header('location: index.php');
+    // header('location: index.php');
 }
 
 // Obtém a página atual (padrão para 1 se não especificado)
-$pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
-$limite = 15; // Número de certidões por página
-$offset = ($pagina - 1) * $limite;
+$paginaAtual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+$limite = 20; // Número de certidões por página
+$offset = ($paginaAtual - 1) * $limite;
 
 // Filtra as certidões com paginação
 $filtro_num_certidao = isset($_GET['filtro_num_certidao']) ? $_GET['filtro_num_certidao'] : null;
-$filtro_data = isset($_GET['data_filtro']) ? $_GET['data_filtro'] : null;
-
-// Converte a data do filtro para o formato correto
 $data_inicial = null;
 $data_final = null;
 
-if (!empty($filtro_data)) {
-    $data_filtro_array = explode(' até ', $filtro_data);
-    
-    if (count($data_filtro_array) === 2) {
-        $data_inicial_obj = DateTime::createFromFormat('d/m/Y H:i', trim($data_filtro_array[0]));
-        $data_final_obj = DateTime::createFromFormat('d/m/Y H:i', trim($data_filtro_array[1]));
+// Total de certidões para paginação
+$totalCertidoes = contarCertidoes($filtro_num_certidao, $data_inicial, $data_final); // A função deve contar apenas com base no filtro de num_certidao
+$certidoes = filtrarCertidoes($mesAtual, $filtro_num_certidao, $limite, $offset);
 
-        if ($data_inicial_obj) {
-            $data_inicial = $data_inicial_obj->format('Y-m-d H:i:s');
-        } else {
-            echo "<script>alert('Formato de data inicial inválido: " . htmlspecialchars($data_filtro_array[0]) . "');</script>";
-        }
-
-        if ($data_final_obj) {
-            $data_final = $data_final_obj->format('Y-m-d H:i:s');
-        } else {
-            echo "<script>alert('Formato de data final inválido: " . htmlspecialchars($data_filtro_array[1]) . "');</script>";
-        }
-    } else {
-        echo "<script>alert('Formato de data inválido. Certifique-se de usar o formato: \"data inicial até data final\".');</script>";
-    }
+if ($filtro_num_certidao) {
+    $certidoes = filtrarCertidoes($filtro_num_certidao, $limite, $offset);
+    // Recalcular o total de certidões filtradas pelo número da certidão
+    $totalCertidoes = contarCertidoes($filtro_num_certidao, $data_inicial, $data_final);
+} else {
+    // Caso contrário, utiliza o mês atual para filtrar
+    $certidoes = filtrarCertidoes($mesAtual, $filtro_num_certidao, $limite, $offset);
+    // Recalcular o total de certidões com base no mês atual
+    $totalCertidoes = contarCertidoes(null, $data_inicial, $data_final, $mesAtual);
 }
-
-$totalCertidoes = contarCertidoes($filtro_num_certidao, $data_inicial, $data_final); // Função para contar registros
-$certidoes = filtrarCertidoes($filtro_num_certidao, $data_inicial, $data_final, $limite, $offset);
 
 // Calcula o total de páginas
 $totalPaginas = ceil($totalCertidoes / $limite);
@@ -90,12 +76,11 @@ $totalPaginas = ceil($totalCertidoes / $limite);
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 
 <div class="protocolos">
-    <h3>Filtrar Certidões</h3>
-    <form method="get">
+    <h3>Certidões</h3>
+    <!-- <form method="get">
         <input type="number" name="filtro_num_certidao" placeholder="Número da Certidão" value="<?php echo isset($filtro_num_certidao) ? $filtro_num_certidao : ''; ?>">
-        <input type="text" class="form-control datetime" name="data_filtro" id="data_filtro" placeholder="Data Inicial Ex: 19/09/2024 14:30" value="<?php echo isset($filtro_data) ? $filtro_data : ''; ?>">
         <button type="submit" class="bt-editar">Buscar</button>
-    </form>
+    </form> -->
 
     <table>
         <tr>
@@ -110,7 +95,7 @@ $totalPaginas = ceil($totalCertidoes / $limite);
         <?php if (!empty($certidoes)): ?>
             <?php foreach ($certidoes as $certidao): ?>
                 <tr>
-                    <td><?php echo htmlspecialchars($certidao['num_certidao']); ?></td>
+                    <td><?php echo htmlspecialchars($certidao['num']); ?></td>
                     <td>
                         <?php 
                         $dataInicialObj = DateTime::createFromFormat('Y-m-d H:i:s', $certidao['data_inicial']);
@@ -139,14 +124,22 @@ $totalPaginas = ceil($totalCertidoes / $limite);
                     <td><?php echo htmlspecialchars($certidao['tipo']); ?></td>
                     <td><?php echo htmlspecialchars($certidao['origem']); ?></td>
                     <td>
-                        <button type="button" class="bt-editar" data-id="<?php echo htmlspecialchars($certidao['num_certidao']); ?>">Editar</button>
-                        <a href="<?php echo $_SERVER['PHP_SELF'] . '?delete_id=' . htmlspecialchars($certidao['num_certidao']); ?>" onclick="return confirm('Tem certeza que deseja excluir esta certidão?');" class="btn-delete">Excluir</a>
+                        <button type="button" class="bt-editar" data-id="<?php echo htmlspecialchars($certidao['num']); ?>">Editar</button>
+                        <a href="<?php echo $_SERVER['PHP_SELF'] . '?delete_id=' . htmlspecialchars($certidao['num']); ?>" onclick="return confirm('Tem certeza que deseja excluir esta certidão?');" class="btn-delete">Excluir</a>
                     </td>
                 </tr>
             <?php endforeach; ?>
         <?php else: ?>
             <tr>
                 <td colspan="7">Nenhuma certidão encontrada.</td>
+                <?php
+                if (isset($_GET['filtro_num_certidao'])) {
+                    echo 'Filtro de num_certidao: ' . $_GET['filtro_num_certidao'];
+                } else {
+                    echo 'Filtro num_certidao não encontrado.';
+                }
+                                
+                ?>
             </tr>
         <?php endif; ?>
     </table>
@@ -168,6 +161,7 @@ $totalPaginas = ceil($totalCertidoes / $limite);
             <a href="?pagina=<?php echo $pagina + 1; ?>&filtro_num_certidao=<?php echo urlencode($filtro_num_certidao); ?>&data_filtro=<?php echo urlencode($filtro_data); ?>">Próxima</a>
         <?php endif; ?>
     </div>
+</div>
 
     <!-- Modal de Edição -->
     <div id="modal-editar" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center;">
@@ -212,6 +206,8 @@ $totalPaginas = ceil($totalCertidoes / $limite);
                             <option value="Certidão negativa de registro auxiliar">Certidão negativa de registro auxiliar</option>
                             <option value="Certidão em relatório">Certidão em relatório</option>
                             <option value="Inteiro teor de registro auxiliar">Inteiro teor de registro auxiliar</option>
+                            <option value="Certidão de documento arquivado">Certidão de documento arquivado</option>
+                            <option value="Consulta de penhor">Consulta de penhor</option>
                         </select>
                     </div>
 
