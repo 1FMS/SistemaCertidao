@@ -11,7 +11,7 @@ function isDiaUtil($data, $feriados) {
 function calcularEInserirCertidao($num_certidao, $data_inicial, $data_final, $origem, $tipo, $quantidade) {
     global $conexao;
     $feriados = [
-        '01/01', '21/04', '01/05', '07/09', '12/10', '02/11', '15/11', '20/11', '25/12'
+        '01/01', '21/04', '01/05', '07/09', '12/10', '02/11', '15/11', '20/11', '24/12', '25/12', '31/12'
     ];
 
     $inicio = DateTime::createFromFormat('d/m/Y H:i', $data_inicial);
@@ -138,32 +138,44 @@ function atualizarCertidao($num_certidao, $data_inicial, $data_final, $origem, $
 
 function obterCertidoesArray($mesAtual, $numCertidao = null) {
     global $conexao;
-
-    // Prepare a consulta SQL
-    $sql = "SELECT num_certidao, data_inicial, data_final, intervalo, tipo, origem FROM certidao WHERE mes = ?";
-
+    
+    // Inicia a consulta SQL
+    $sql = "SELECT num_certidao, data_inicial, data_final, intervalo, tipo, origem 
+            FROM certidao 
+            WHERE mes = ?";
+    
+    // Se numCertidao for fornecido, adiciona o filtro
     if ($numCertidao) {
         $sql .= " AND num_certidao = ?";
     }
-
-    // Ordenar pela coluna data_insercao em ordem decrescente
-    $sql .= " ORDER BY num_certidao DESC"; 
-
+    
+    // Ordena pelo número da certidão de forma decrescente
+    $sql .= " ORDER BY num_certidao DESC";
+    
+    // Prepara a consulta SQL
     $stmt = mysqli_prepare($conexao, $sql);
     if (!$stmt) {
         die('Erro na preparação da consulta: ' . mysqli_error($conexao));
     }
-
+    
+    // Faz o bind dos parâmetros de acordo com os filtros passados
     if ($numCertidao) {
-        mysqli_stmt_bind_param($stmt, "ii", $mesAtual, $numCertidao);
+        mysqli_stmt_bind_param($stmt, "ii", $mesAtual, $numCertidao); // Se numCertidao for passado, faz o bind para "mes" e "numCertidao"
     } else {
-        mysqli_stmt_bind_param($stmt, "i", $mesAtual);
+        mysqli_stmt_bind_param($stmt, "i", $mesAtual); // Se não, faz o bind apenas para "mes"
+    }
+    
+    // Executa a consulta SQL
+    $executado = mysqli_stmt_execute($stmt);
+    if (!$executado) {
+        die('Erro ao executar a consulta: ' . mysqli_error($conexao));
     }
 
-    mysqli_stmt_execute($stmt);
+    // Obtém o resultado da consulta
     $result = mysqli_stmt_get_result($stmt);
-
     $certidoes = [];
+    
+    // Se houver resultados, armazena-os no array
     while ($row = mysqli_fetch_assoc($result)) {
         $certidoes[] = [
             'num' => $row['num_certidao'],
@@ -174,8 +186,10 @@ function obterCertidoesArray($mesAtual, $numCertidao = null) {
             'origem' => $row['origem']
         ];
     }
-
+    // Fecha o statement
     mysqli_stmt_close($stmt);
+    
+    // Retorna os dados encontrados
     return $certidoes;
 }
 
@@ -203,78 +217,100 @@ function deletarCertidao($num_certidao) {
     }
 }
 
-function filtrarCertidoes($mesAtual, $num_certidao = null, $data_inicial = null, $data_final = null, $limite = null, $offset = null) {
+function filtrarCertidoes($mesAtual, $num_certidao = null, $limite = null, $offset = null) {
     global $conexao;
-    
-    // Base da consulta
-    $sql = "SELECT num_certidao, data_inicial, data_final, intervalo, tipo, origem, quantidade 
-            FROM certidao 
-            WHERE mes = ?";
-    $params = [$mesAtual];
-    $types = "i"; // O mês é um inteiro
-    
-    // Adicionar filtros opcionais
-    if (!empty($num_certidao)) {
+
+    // Base da consulta sem filtro de num_certidao
+    $sql = "SELECT num_certidao, data_inicial, data_final, intervalo, tipo, origem 
+            FROM certidao WHERE 1";  // WHERE 1 é um truque para sempre permitir adicionar condições adicionais
+
+    // Se num_certidao for fornecido, adiciona a condição para num_certidao
+    if ($num_certidao !== null) {
         $sql .= " AND num_certidao = ?";
-        $params[] = $num_certidao;
-        $types .= "i"; // Número da certidão é inteiro
     }
 
-    if (!empty($data_inicial) && !empty($data_final)) {
-        $sql .= " AND data_inicial BETWEEN ? AND ?";
-        $params[] = $data_inicial;
-        $params[] = $data_final;
-        $types .= "ss"; // Datas são strings
+    // Se o mês for fornecido (e não estamos buscando por num_certidao específico), aplica o filtro de mês
+    if ($num_certidao === null) {
+        $sql .= " AND mes = ?";
     }
 
-    // Ordenação
-    $sql .= " ORDER BY data_inicial DESC";
+    // Ordena pela data de início (mais recente primeiro)
+    $sql .= " ORDER BY num_certidao DESC";
 
-    // Adicionar limite e offset para paginação
+    // Adicionar limite e offset para paginação, se fornecidos
     if ($limite !== null) {
         $sql .= " LIMIT ?";
-        $params[] = $limite;
-        $types .= "i"; // Limite é inteiro
     }
     if ($offset !== null) {
         $sql .= " OFFSET ?";
-        $params[] = $offset;
-        $types .= "i"; // Offset é inteiro
     }
 
+
+
+    // Preparar a consulta
     $stmt = mysqli_prepare($conexao, $sql);
-    if ($stmt === false) {
+    if (!$stmt) {
         die('Erro ao preparar a consulta: ' . mysqli_error($conexao));
     }
 
-    // Associar os parâmetros
-    if (!empty($params)) {
-        $bindParams = [];
-        $bindParams[] = &$types; // Tipos
-        foreach ($params as $key => $value) {
-            $bindParams[] = &$params[$key]; // Cada parâmetro por referência
-        }
-        call_user_func_array('mysqli_stmt_bind_param', array_merge([$stmt], $bindParams));
+    // Definir os parâmetros para bind
+    $params = [];
+    $types = "";
+
+    // Se houver filtro num_certidao, adiciona ao bind
+    if ($num_certidao !== null) {
+        $params[] = $num_certidao;
+        $types .= "i";  // Tipo para num_certidao (inteiro)
     }
 
-    // Executar a consulta
-    if (mysqli_stmt_execute($stmt)) {
-        $result = mysqli_stmt_get_result($stmt);
-        if ($result) {
-            $certidoes = [];
-            while ($row = mysqli_fetch_assoc($result)) {
-                $certidoes[] = $row;
-            }
-            mysqli_stmt_close($stmt);
-            return $certidoes;
-        } else {
-            echo "<script>console.log('Erro ao obter resultado: " . mysqli_error($conexao) . "');</script>";
-            return [];
-        }
-    } else {
-        echo "<script>console.log('Erro ao executar a consulta: " . mysqli_stmt_error($stmt) . "');</script>";
-        return [];
+    // Se não estamos filtrando por num_certidao, usamos o mês
+    if ($num_certidao === null) {
+        $params[] = $mesAtual;
+        $types .= "i";  // Tipo para mes (inteiro)
     }
+
+    // Adicionar limite e offset, se fornecidos
+    if ($limite !== null) {
+        $params[] = $limite;
+        $types .= "i";  // Tipo para limite (inteiro)
+    }
+    if ($offset !== null) {
+        $params[] = $offset;
+        $types .= "i";  // Tipo para offset (inteiro)
+    }
+    // Bind os parâmetros
+    $bindParams = [];
+    $bindParams[] = &$types; // Tipos
+    foreach ($params as $key => $value) {
+        $bindParams[] = &$params[$key]; // Cada parâmetro por referência
+    }
+    call_user_func_array('mysqli_stmt_bind_param', array_merge([$stmt], $bindParams));
+
+    // Executar a consulta
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+
+    // Verificar se houve erro na execução da consulta
+    if (!$result) {
+        die('Erro na consulta: ' . mysqli_error($conexao));
+    }
+
+    // Retornar os resultados
+    $certidoes = [];
+    while ($row = mysqli_fetch_assoc($result)) {
+        $certidoes[] = [
+            'num' => $row['num_certidao'],
+            'data_inicial' => $row['data_inicial'],
+            'data_final' => $row['data_final'],
+            'intervalo' => $row['intervalo'],
+            'tipo' => $row['tipo'],
+            'origem' => $row['origem']
+        ];
+    }
+    mysqli_stmt_close($stmt);
+
+
+    return $certidoes;
 }
 
 
