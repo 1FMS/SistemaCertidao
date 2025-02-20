@@ -26,7 +26,7 @@ Este sistema web foi desenvolvido para registrar e monitorar os horários de ent
 2. **Configure o ambiente:**  
    - Instale o XAMPP 5.5.19
    - Verifique se o PHP 5.5.19 está ativado.  
-   - Inicie os serviços do WAMPP.  
+   - Inicie os serviços do XAMPP.  
 
 3. **Importe o banco de dados:**  
    - Acesse o **phpMyAdmin**.  
