@@ -7,7 +7,7 @@ Este sistema web foi desenvolvido para registrar e monitorar os horários de ent
 - **Linguagem Backend:** PHP (versão 5.5.19)  
 - **Banco de Dados:** MySQL (phpMyAdmin)  
 - **Frontend:** HTML, CSS, JavaScript  
-- **Ambiente de Desenvolvimento:** WampServer (versão 5.5.19)  
+- **Ambiente de Desenvolvimento:** XAMPP (versão 5.5.19)  
 
 ## 🚀 Funcionalidades  
 
@@ -24,9 +24,9 @@ Este sistema web foi desenvolvido para registrar e monitorar os horários de ent
    ```
 
 2. **Configure o ambiente:**  
-   - Instale o [WampServer 5.5.19](https://sourceforge.net/projects/wampserver/files/WampServer%205/WampServer%205.5.19/)  
+   - Instale o XAMPP 5.5.19
    - Verifique se o PHP 5.5.19 está ativado.  
-   - Inicie os serviços do WAMP.  
+   - Inicie os serviços do WAMPP.  
 
 3. **Importe o banco de dados:**  
    - Acesse o **phpMyAdmin**.  
