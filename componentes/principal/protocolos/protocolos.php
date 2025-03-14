@@ -1,7 +1,7 @@
 <?php
 require_once('./componentes/principal/backprincipal.php');
 
-$mesAtual = 01;//(int)date('m'); // Obtém o mês atual para filtrar as certidões
+$mesAtual = 03;//(int)date('m'); // Obtém o mês atual para filtrar as certidões
 $certidoes = obterCertidoesArray($mesAtual);
 
 // Verifica se há uma requisição POST para atualização
@@ -77,11 +77,6 @@ $totalPaginas = ceil($totalCertidoes / $limite);
 
 <div class="protocolos">
     <h3>Certidões</h3>
-    <!-- <form method="get">
-        <input type="number" name="filtro_num_certidao" placeholder="Número da Certidão" value="<?php echo isset($filtro_num_certidao) ? $filtro_num_certidao : ''; ?>">
-        <button type="submit" class="bt-editar">Buscar</button>
-    </form> -->
-
     <table>
         <tr>
             <th>Número</th>
@@ -135,32 +130,12 @@ $totalPaginas = ceil($totalCertidoes / $limite);
                 <?php
                 if (isset($_GET['filtro_num_certidao'])) {
                     echo 'Filtro de num_certidao: ' . $_GET['filtro_num_certidao'];
-                } else {
-                    echo 'Filtro num_certidao não encontrado.';
                 }
                                 
                 ?>
             </tr>
         <?php endif; ?>
     </table>
-
-    <!-- Navegação de Paginação -->
-    <div class="paginacao" style="margin-top: 15px;">
-        <?php if ($pagina > 1): ?>
-            <a href="?pagina=<?php echo $pagina - 1; ?>&filtro_num_certidao=<?php echo urlencode($filtro_num_certidao); ?>&data_filtro=<?php echo urlencode($filtro_data); ?>">Anterior</a>
-        <?php endif; ?>
-
-        <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
-            <a href="?pagina=<?php echo $i; ?>&filtro_num_certidao=<?php echo urlencode($filtro_num_certidao); ?>&data_filtro=<?php echo urlencode($filtro_data); ?>" 
-            class="<?php echo $i === $pagina ? 'pagina-ativa' : ''; ?>">
-            <?php echo $i; ?>
-            </a>
-        <?php endfor; ?>
-
-        <?php if ($pagina < $totalPaginas): ?>
-            <a href="?pagina=<?php echo $pagina + 1; ?>&filtro_num_certidao=<?php echo urlencode($filtro_num_certidao); ?>&data_filtro=<?php echo urlencode($filtro_data); ?>">Próxima</a>
-        <?php endif; ?>
-    </div>
 </div>
 
     <!-- Modal de Edição -->
