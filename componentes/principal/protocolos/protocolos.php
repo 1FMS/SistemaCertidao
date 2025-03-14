@@ -39,7 +39,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['action'] === 'update') {
 if (isset($_GET['delete_id'])) {
     $num_certidao = $_GET['delete_id'];
     deletarCertidao($num_certidao);
-    // header('location: index.php');
 }
 
 // Obtém a página atual (padrão para 1 se não especificado)
@@ -53,22 +52,18 @@ $data_inicial = null;
 $data_final = null;
 
 // Total de certidões para paginação
-$totalCertidoes = contarCertidoes($filtro_num_certidao, $data_inicial, $data_final); // A função deve contar apenas com base no filtro de num_certidao
 $certidoes = filtrarCertidoes($mesAtual, $filtro_num_certidao, $limite, $offset);
 
 if ($filtro_num_certidao) {
     $certidoes = filtrarCertidoes($filtro_num_certidao, $limite, $offset);
     // Recalcular o total de certidões filtradas pelo número da certidão
-    $totalCertidoes = contarCertidoes($filtro_num_certidao, $data_inicial, $data_final);
 } else {
     // Caso contrário, utiliza o mês atual para filtrar
     $certidoes = filtrarCertidoes($mesAtual, $filtro_num_certidao, $limite, $offset);
     // Recalcular o total de certidões com base no mês atual
-    $totalCertidoes = contarCertidoes(null, $data_inicial, $data_final, $mesAtual);
+
 }
 
-// Calcula o total de páginas
-$totalPaginas = ceil($totalCertidoes / $limite);
 ?>
 
 <link rel="stylesheet" href="./componentes/principal/protocolos/protocolos.css">
