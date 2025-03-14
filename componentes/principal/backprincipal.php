@@ -11,14 +11,14 @@ function isDiaUtil($data, $feriados) {
 function calcularEInserirCertidao($num_certidao, $data_inicial, $data_final, $origem, $tipo, $quantidade) {
     global $conexao;
     $feriados = [
-        '01/01', '21/04', '01/05', '07/09', '12/10', '02/11', '15/11', '20/11', '24/12', '25/12', '31/12'
+        '01/01', '03/03', '04/03', '05/03', '21/04', '01/05', '07/09', '12/10', '02/11', '15/11', '20/11', '24/12', '25/12', '31/12'
     ];
 
     $inicio = DateTime::createFromFormat('d/m/Y H:i', $data_inicial);
     $fim = DateTime::createFromFormat('d/m/Y H:i', $data_final);
 
     if (!$inicio || !$fim) {
-        echo "Erro: datas inválidas.";
+        echo "<script>alert('Erro: Erro na inserção dos dados. Tente novamente!');</script>";
         return false;
     }
 
@@ -311,55 +311,4 @@ function filtrarCertidoes($mesAtual, $num_certidao = null, $limite = null, $offs
 
 
     return $certidoes;
-}
-
-
-function contarCertidoes($mesAtual, $num_certidao = null, $data_inicial = null, $data_final = null) {
-    global $conexao;
-    
-    $sql = "SELECT COUNT(*) as total FROM certidao WHERE mes = ?";
-    $params = [$mesAtual];
-    $types = "i"; // O mês é um inteiro
-    
-    if (!empty($num_certidao)) {
-        $sql .= " AND num_certidao = ?";
-        $params[] = $num_certidao;
-        $types .= "i";
-    }
-    
-    if (!empty($data_inicial) && !empty($data_final)) {
-        $sql .= " AND data_inicial BETWEEN ? AND ?";
-        $params[] = $data_inicial;
-        $params[] = $data_final;
-        $types .= "ss";
-    }
-
-    $stmt = mysqli_prepare($conexao, $sql);
-    if ($stmt === false) {
-        die('Erro ao preparar a consulta: ' . mysqli_error($conexao));
-    }
-
-    if (!empty($params)) {
-        $bindParams = [];
-        $bindParams[] = &$types;
-        foreach ($params as $key => $value) {
-            $bindParams[] = &$params[$key];
-        }
-        call_user_func_array('mysqli_stmt_bind_param', array_merge([$stmt], $bindParams));
-    }
-
-    if (mysqli_stmt_execute($stmt)) {
-        $result = mysqli_stmt_get_result($stmt);
-        if ($result) {
-            $row = mysqli_fetch_assoc($result);
-            mysqli_stmt_close($stmt);
-            return $row['total'];
-        } else {
-            echo "<script>console.log('Erro ao obter resultado: " . mysqli_error($conexao) . "');</script>";
-            return 0;
-        }
-    } else {
-        echo "<script>console.log('Erro ao executar a consulta: " . mysqli_stmt_error($stmt) . "');</script>";
-        return 0;
-    }
 }
