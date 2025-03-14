@@ -1,9 +1,6 @@
 <?php
 require_once('./componentes/principal/backprincipal.php');
 
-$mesAtual = 03;//(int)date('m'); // Obtém o mês atual para filtrar as certidões
-$certidoes = obterCertidoesArray($mesAtual);
-
 // Verifica se há uma requisição POST para atualização
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['action'] === 'update') {
     // Exiba os dados recebidos para debug
@@ -43,7 +40,7 @@ if (isset($_GET['delete_id'])) {
 
 // Obtém a página atual (padrão para 1 se não especificado)
 $paginaAtual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
-$limite = 20; // Número de certidões por página
+$limite = 35; // Número de certidões por página
 $offset = ($paginaAtual - 1) * $limite;
 
 // Filtra as certidões com paginação
@@ -52,14 +49,14 @@ $data_inicial = null;
 $data_final = null;
 
 // Total de certidões para paginação
-$certidoes = filtrarCertidoes($mesAtual, $filtro_num_certidao, $limite, $offset);
+$certidoes = filtrarCertidoes($filtro_num_certidao, $limite, $offset);
 
 if ($filtro_num_certidao) {
     $certidoes = filtrarCertidoes($filtro_num_certidao, $limite, $offset);
     // Recalcular o total de certidões filtradas pelo número da certidão
 } else {
     // Caso contrário, utiliza o mês atual para filtrar
-    $certidoes = filtrarCertidoes($mesAtual, $filtro_num_certidao, $limite, $offset);
+    $certidoes = filtrarCertidoes($filtro_num_certidao, $limite, $offset);
     // Recalcular o total de certidões com base no mês atual
 
 }
