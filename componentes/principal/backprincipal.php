@@ -135,65 +135,6 @@ function atualizarCertidao($num_certidao, $data_inicial, $data_final, $origem, $
     }
 }
 
-
-function obterCertidoesArray($mesAtual, $numCertidao = null) {
-    global $conexao;
-    
-    // Inicia a consulta SQL
-    $sql = "SELECT num_certidao, data_inicial, data_final, intervalo, tipo, origem 
-            FROM certidao 
-            WHERE mes = ?";
-    
-    // Se numCertidao for fornecido, adiciona o filtro
-    if ($numCertidao) {
-        $sql .= " AND num_certidao = ?";
-    }
-    
-    // Ordena pelo número da certidão de forma decrescente
-    $sql .= " ORDER BY num_certidao DESC";
-    
-    // Prepara a consulta SQL
-    $stmt = mysqli_prepare($conexao, $sql);
-    if (!$stmt) {
-        die('Erro na preparação da consulta: ' . mysqli_error($conexao));
-    }
-    
-    // Faz o bind dos parâmetros de acordo com os filtros passados
-    if ($numCertidao) {
-        mysqli_stmt_bind_param($stmt, "ii", $mesAtual, $numCertidao); // Se numCertidao for passado, faz o bind para "mes" e "numCertidao"
-    } else {
-        mysqli_stmt_bind_param($stmt, "i", $mesAtual); // Se não, faz o bind apenas para "mes"
-    }
-    
-    // Executa a consulta SQL
-    $executado = mysqli_stmt_execute($stmt);
-    if (!$executado) {
-        die('Erro ao executar a consulta: ' . mysqli_error($conexao));
-    }
-
-    // Obtém o resultado da consulta
-    $result = mysqli_stmt_get_result($stmt);
-    $certidoes = [];
-    
-    // Se houver resultados, armazena-os no array
-    while ($row = mysqli_fetch_assoc($result)) {
-        $certidoes[] = [
-            'num' => $row['num_certidao'],
-            'data_inicial' => $row['data_inicial'],
-            'data_final' => $row['data_final'],
-            'intervalo' => $row['intervalo'],
-            'tipo' => $row['tipo'],
-            'origem' => $row['origem']
-        ];
-    }
-    // Fecha o statement
-    mysqli_stmt_close($stmt);
-    
-    // Retorna os dados encontrados
-    return $certidoes;
-}
-
-
 function deletarCertidao($num_certidao) {
     global $conexao; // Certifique-se de que a conexão com o banco de dados está disponível
 
@@ -217,7 +158,7 @@ function deletarCertidao($num_certidao) {
     }
 }
 
-function filtrarCertidoes($mesAtual, $num_certidao = null, $limite = null, $offset = null) {
+function filtrarCertidoes($num_certidao = null, $limite = null, $offset = null) {
     global $conexao;
 
     // Base da consulta sem filtro de num_certidao
@@ -229,13 +170,8 @@ function filtrarCertidoes($mesAtual, $num_certidao = null, $limite = null, $offs
         $sql .= " AND num_certidao = ?";
     }
 
-    // Se o mês for fornecido (e não estamos buscando por num_certidao específico), aplica o filtro de mês
-    if ($num_certidao === null) {
-        $sql .= " AND mes = ?";
-    }
-
-    // Ordena pela data de início (mais recente primeiro)
-    $sql .= " ORDER BY num_certidao DESC";
+    // Ordena pela data de inserção (mais recente primeiro), ou por num_certidao como fallback
+    $sql .= " ORDER BY num_certidao DESC"; // Ou você pode usar uma coluna `data_insercao` para ordenar pelas mais recentes
 
     // Adicionar limite e offset para paginação, se fornecidos
     if ($limite !== null) {
@@ -244,8 +180,6 @@ function filtrarCertidoes($mesAtual, $num_certidao = null, $limite = null, $offs
     if ($offset !== null) {
         $sql .= " OFFSET ?";
     }
-
-
 
     // Preparar a consulta
     $stmt = mysqli_prepare($conexao, $sql);
@@ -263,12 +197,6 @@ function filtrarCertidoes($mesAtual, $num_certidao = null, $limite = null, $offs
         $types .= "i";  // Tipo para num_certidao (inteiro)
     }
 
-    // Se não estamos filtrando por num_certidao, usamos o mês
-    if ($num_certidao === null) {
-        $params[] = $mesAtual;
-        $types .= "i";  // Tipo para mes (inteiro)
-    }
-
     // Adicionar limite e offset, se fornecidos
     if ($limite !== null) {
         $params[] = $limite;
@@ -278,6 +206,7 @@ function filtrarCertidoes($mesAtual, $num_certidao = null, $limite = null, $offs
         $params[] = $offset;
         $types .= "i";  // Tipo para offset (inteiro)
     }
+
     // Bind os parâmetros
     $bindParams = [];
     $bindParams[] = &$types; // Tipos
@@ -308,7 +237,6 @@ function filtrarCertidoes($mesAtual, $num_certidao = null, $limite = null, $offs
         ];
     }
     mysqli_stmt_close($stmt);
-
 
     return $certidoes;
 }
