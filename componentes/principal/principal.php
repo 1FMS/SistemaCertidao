@@ -20,7 +20,6 @@ if (isset($_POST['action']) && $_POST['action'] == 'insert') {
 ?>
 
 <div class="content">
-    <h1>Bem-vindo!</h1>
     <div class="input-area">
         <form method="post" id="form-insert">
             <input type="hidden" name="action" value="insert">
@@ -30,7 +29,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'insert') {
             </div>
 
             <div class="input-data">
-                <p class="text-input">Origem:</p>
+                <p class="text-input">Origem/ Destino:</p>
                 <select name="origem" class="input-data-select" required>
                     <option value="ONR">ONR</option>
                     <option value="Cartórios Maranhão">Cartórios Maranhão</option>

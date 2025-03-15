@@ -76,7 +76,7 @@ if ($filtro_num_certidao) {
             <th>Data de Fim</th>
             <th>Intervalo</th>
             <th>Tipo</th>
-            <th>Origem</th>
+            <th>Origem/ Destino</th>
             <th>Ações</th>
         </tr>
         <?php if (!empty($certidoes)): ?>
@@ -179,7 +179,7 @@ if ($filtro_num_certidao) {
                     </div>
 
                     <div class="form-group" style="margin-bottom: 15px;">
-                        <label for="modal-origem">Origem:</label>
+                        <label for="modal-origem">Origem/ Destino:</label>
                         <select name="origem" id="modal-origem" class="form-control" required>
                             <option value="ONR">ONR</option>
                             <option value="Cartórios Maranhão">Cartórios Maranhão</option>
@@ -197,7 +197,7 @@ if ($filtro_num_certidao) {
 
                     <div class="modal-footer" style="display: flex; justify-content: flex-end; margin-top: 20px;">
                         <button type="button" onclick="fecharModal()" style="padding: 10px 20px; border: none; background-color: #ccc; border-radius: 4px; cursor: pointer; margin-right: 10px;">Cancelar</button>
-                        <button type="submit" class="btn-save" style="padding: 10px 20px; border: none; background-color: #007bff; color: #fff; border-radius: 4px; cursor: pointer;">Salvar Alterações</button>
+                        <button type="submit" class="btn-save" style="padding: 10px 20px; border: none; background-color: #798C72; color: #fff; border-radius: 4px; cursor: pointer;">Salvar Alterações</button>
                     </div>
                 </form>
             </div>

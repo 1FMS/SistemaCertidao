@@ -48,6 +48,9 @@
     font-size: larger;
     border-radius: 10px;
 }
+.bt-insert:hover{
+    background-color: #73806E;
+}
 
 html, body {
     margin: 0;
